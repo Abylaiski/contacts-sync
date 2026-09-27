@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Синхронизация контактов AgentOS</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg-color: var(--tg-theme-bg-color, #0f172a);
+      --text-color: var(--tg-theme-text-color, #f8fafc);
+      --hint-color: var(--tg-theme-hint-color, #94a3b8);
+      --button-color: var(--tg-theme-button-color, #2563eb);
+      --button-text: var(--tg-theme-button-text-color, #ffffff);
+      --card-bg: var(--tg-theme-secondary-bg-color, #1e293b);
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 90vh;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .icon {
+      font-size: 64px;
+      margin-top: 20px;
+      animation: bounce 2s infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    h1 {
+      font-size: 22px;
+      margin: 12px 0 6px 0;
+      font-weight: 700;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: var(--hint-color);
+      line-height: 1.5;
+      margin-bottom: 24px;
+      max-width: 320px;
+    }
+    .reward-badge {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+      margin-bottom: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px;
+      width: 100%;
+      max-width: 340px;
+      text-align: left;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: var(--text-color);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .card-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn {
+      width: 100%;
+      max-width: 340px;
+      background: var(--button-color);
+      color: var(--button-text);
+      font-size: 16px;
+      font-weight: 600;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+    .status {
+      font-size: 13px;
+      color: var(--hint-color);
+      margin-top: 12px;
+    }
+    #fileInput {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div class="icon">📱</div>
+    <h1>Синхронизация контактов</h1>
+    <div class="subtitle">Поделитесь записной книжкой для взаимного обогащения открытых телефонных ассоциаций</div>
+    
+    <div class="reward-badge">
+      <span>🎁</span>
+      <span>Бонус: +50 проверок на баланс</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔒 Полная конфиденциальность</div>
+      <div>• Все имена агрегируются обезличенно.<br>• Никто не узнает, кто именно внес контакт.<br>• Проверки начисляются моментально.</div>
+    </div>
+  </div>
+
+  <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+    <button id="syncBtn" class="btn">
+      <span>⚡</span>
+      <span>Синхронизировать в 1 клик</span>
+    </button>
+    <input type="file" id="fileInput" accept=".vcf,.vcard">
+    <div id="statusText" class="status">Нажмите для выбора контактов</div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+    const syncBtn = document.getElementById('syncBtn');
+    const statusText = document.getElementById('statusText');
+    const fileInput = document.getElementById('fileInput');
+
+    syncBtn.addEventListener('click', async () => {
+      // 1. Проверяем поддержку W3C Web Contacts API (Android Chrome / Webview)
+      if ('contacts' in navigator && 'ContactsManager' in window) {
+        try {
+          statusText.innerText = "Открываю системное окно контактов...";
+          const props = ['name', 'tel'];
+          const opts = { multiple: true };
+          const contacts = await navigator.contacts.select(props, opts);
+          
+          if (!contacts || contacts.length === 0) {
+            statusText.innerText = "Контакты не были выбраны";
+            return;
+          }
+
+          statusText.innerText = `Выбрано: ${contacts.length}. Отправляю в AgentOS...`;
+
+          // Преобразуем в плоский формат
+          const formatted = [];
+          for (const c of contacts) {
+            const name = (c.name && c.name.length) ? c.name[0] : "Контакт";
+            const tels = c.tel || [];
+            for (const t of tels) {
+              formatted.push({ name: name, tel: t });
+            }
+          }
+
+          if (tg) {
+            tg.sendData(JSON.stringify({ contacts: formatted }));
+            tg.close();
+          } else {
+            alert(`Успешно выбрано ${formatted.length} номеров!`);
+          }
+        } catch (err) {
+          console.warn("Contacts API cancelled or error:", err);
+          statusText.innerText = "Используйте экспорт файла .vcf ниже";
+          fileInput.click();
+        }
+      } else {
+        // 2. Fallback для iOS / браузеров без прямого доступа: быстрый выбор .vcf файла
+        statusText.innerText = "Выберите экспортированный файл контактов (.vcf)";
+        fileInput.click();
+      }
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      statusText.innerText = `Читаю ${file.name}...`;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const text = evt.target.result;
+        // Простой парсинг vcf в браузере
+        const blocks = text.split(/BEGIN:VCARD/i);
+        const contacts = [];
+        for (const b of blocks) {
+          if (!b.trim()) continue;
+          let name = "Контакт";
+          const fnMatch = b.match(/(?:^|\n)FN(?:;[^:]*)?:([^\r\n]+)/i);
+          if (fnMatch) name = fnMatch[1].trim();
+
+          const telMatches = b.match(/(?:^|\n)TEL(?:;[^:]*)?:([^\r\n]+)/gi);
+          if (telMatches) {
+            for (const tm of telMatches) {
+              const telVal = tm.replace(/^TEL[^:]*:/i, '').trim();
+              contacts.push({ name: name, tel: telVal });
+            }
+          }
+        }
+
+        if (contacts.length > 0 && tg) {
+          statusText.innerText = `Отправляю ${contacts.length} контактов боту...`;
+          tg.sendData(JSON.stringify({ contacts: contacts }));
+          tg.close();
+        } else {
+          statusText.innerText = `Найдено контактов: ${contacts.length}.`;
+        }
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
