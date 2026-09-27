@@ -235,15 +235,28 @@
           }
 
           if (tg) {
-            tg.sendData(JSON.stringify({ contacts: formatted }));
-            tg.close();
+            try {
+              tg.sendData(JSON.stringify({ contacts: formatted }));
+              tg.close();
+            } catch (sendErr) {
+              console.warn("tg.sendData failed (usually if opened via inline button):", sendErr);
+              statusText.innerHTML = "⚠️ Для передачи контактов боту откройте Mini App через <b>нижнюю кнопку клавиатуры чата</b>.<br><small style='color:#ef4444'>(" + (sendErr.message || sendErr) + ")</small>";
+              btnLabel.innerText = "Попробовать снова";
+              syncBtn.style.opacity = "1";
+              syncBtn.disabled = false;
+            }
           } else {
             alert(`Успешно выбрано ${formatted.length} номеров!`);
             statusText.innerText = `Успешно передано: ${formatted.length} контактов`;
           }
         } catch (err) {
           console.error("Contacts picker error:", err);
-          statusText.innerText = `Доступ отклонен или заблокирован WebView: ${err.message || err}`;
+          const errMsg = err.message || err.toString();
+          if (errMsg.includes("WebAppDataInvalid")) {
+            statusText.innerHTML = "⚠️ <b>Telegram требует запуск через нижнюю клавиатуру:</b><br>Закройте это окно и нажмите большую кнопку <code>📲 Выбрать контакты (Mini App +50 🎁)</code> внизу чата.";
+          } else {
+            statusText.innerText = `Доступ отклонен или заблокирован: ${errMsg}`;
+          }
           btnLabel.innerText = "Попробовать снова";
           syncBtn.style.opacity = "1";
           syncBtn.disabled = false;
