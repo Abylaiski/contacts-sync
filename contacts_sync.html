@@ -177,11 +177,17 @@
   <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
     <button id="syncBtn" class="btn-main">
       <span class="btn-icon">⚡</span>
-      <span id="btnLabel">Выбрать контакты (1 клик)</span>
+      <span id="btnLabel">Выбрать контакты</span>
     </button>
 
-    <div id="statusText" class="status-text">Нажмите кнопку для открытия телефонной книги</div>
+    <div id="statusText" class="status-text">Нажмите кнопку для выбора контактов</div>
     <div id="browserFallback" class="browser-fallback">Открыть в системном браузере (Chrome / Safari)</div>
+    
+    <div id="returnToBot" style="display:none; margin-top: 14px;">
+      <a href="https://t.me/kz_osint_bot" style="color: #38bdf8; font-weight: bold; text-decoration: none; font-size: 14px; background: rgba(56,189,248,0.1); padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.3); display: inline-block;">
+        🚀 Вернуться в Telegram бота
+      </a>
+    </div>
 
     <div class="privacy">
       Нажимая кнопку, вы соглашаетесь с условиями открытых данных и политикой конфиденциальности платформы AgentOS.
@@ -199,6 +205,7 @@
     const btnLabel = document.getElementById('btnLabel');
     const statusText = document.getElementById('statusText');
     const browserFallback = document.getElementById('browserFallback');
+    const returnToBot = document.getElementById('returnToBot');
 
     // Проверка поддержки W3C Contacts Picker API
     const isContactsSupported = ('contacts' in navigator && 'ContactsManager' in window);
@@ -216,15 +223,15 @@
 
           if (!contacts || contacts.length === 0) {
             statusText.innerText = "Контакты не были выбраны";
-            btnLabel.innerText = "Выбрать контакты (1 клик)";
+            btnLabel.innerText = "Выбрать контакты";
             syncBtn.style.opacity = "1";
             syncBtn.disabled = false;
             return;
           }
 
-          statusText.innerText = `Обработано: ${contacts.length} контактов. Отправляю боту...`;
+          statusText.innerText = `Обработано: ${contacts.length} контактов. Передаю боту...`;
           
-          // Нормализация телефонных записей
+          // Нормализация записей
           const formatted = [];
           for (const c of contacts) {
             const name = (c.name && c.name.length) ? c.name[0] : "Контакт";
@@ -238,36 +245,36 @@
             try {
               tg.sendData(JSON.stringify({ contacts: formatted }));
               tg.close();
+              return;
             } catch (sendErr) {
-              console.warn("tg.sendData failed (usually if opened via inline button):", sendErr);
-              statusText.innerHTML = "⚠️ Для передачи контактов боту откройте Mini App через <b>нижнюю кнопку клавиатуры чата</b>.<br><small style='color:#ef4444'>(" + (sendErr.message || sendErr) + ")</small>";
-              btnLabel.innerText = "Попробовать снова";
-              syncBtn.style.opacity = "1";
-              syncBtn.disabled = false;
+              console.warn("tg.sendData not available:", sendErr);
             }
-          } else {
-            alert(`Успешно выбрано ${formatted.length} номеров!`);
-            statusText.innerText = `Успешно передано: ${formatted.length} контактов`;
           }
+
+          // Если запущено во внешнем браузере Chrome
+          statusText.innerHTML = `✅ Успешно выбрано <b>${formatted.length} контактов</b>!<br>Для начисления бонуса возвращайтесь в чат бота.`;
+          returnToBot.style.display = "block";
+          btnLabel.innerText = "Готово!";
+          
+          // Пытаемся автоматически вернуть пользователя в Telegram
+          setTimeout(() => {
+            window.location.href = "tg://resolve?domain=kz_osint_bot";
+          }, 1500);
+
         } catch (err) {
           console.error("Contacts picker error:", err);
           const errMsg = err.message || err.toString();
-          if (errMsg.includes("WebAppDataInvalid")) {
-            statusText.innerHTML = "⚠️ <b>Telegram требует запуск через нижнюю клавиатуру:</b><br>Закройте это окно и нажмите большую кнопку <code>📲 Выбрать контакты (Mini App +50 🎁)</code> внизу чата.";
-          } else {
-            statusText.innerText = `Доступ отклонен или заблокирован: ${errMsg}`;
-          }
+          statusText.innerText = `Доступ отклонен или закрыт: ${errMsg}`;
           btnLabel.innerText = "Попробовать снова";
           syncBtn.style.opacity = "1";
           syncBtn.disabled = false;
           browserFallback.style.display = "block";
         }
       } else {
-        // Если WebView Telegram заблокировал ContactsManager
-        statusText.innerText = "Telegram WebView ограничил прямой доступ к контактам.";
+        // Если WebView не поддерживает contacts
+        statusText.innerHTML = "⚠️ <b>Ограничение WebView:</b><br>Telegram WebView блокирует чтение контактов из соображений безопасности.<br>Открываю страницу в Chrome...";
         browserFallback.style.display = "block";
         
-        // Открытие во внешнем браузере Chrome, где W3C Contacts API поддерживается штатно
         if (tg && tg.openLink) {
           tg.openLink(window.location.href);
         } else {
