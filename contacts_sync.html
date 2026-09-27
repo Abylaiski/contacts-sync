@@ -2,141 +2,228 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Синхронизация контактов AgentOS</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg-color: var(--tg-theme-bg-color, #0f172a);
+      --bg-color: var(--tg-theme-bg-color, #0b1120);
       --text-color: var(--tg-theme-text-color, #f8fafc);
       --hint-color: var(--tg-theme-hint-color, #94a3b8);
-      --button-color: var(--tg-theme-button-color, #2563eb);
+      --button-color: var(--tg-theme-button-color, #3b82f6);
       --button-text: var(--tg-theme-button-text-color, #ffffff);
       --card-bg: var(--tg-theme-secondary-bg-color, #1e293b);
+      --accent-green: #10b981;
+      --accent-gold: #f59e0b;
+      --card-border: rgba(255, 255, 255, 0.08);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
     body {
       margin: 0;
-      padding: 20px;
+      padding: 16px 16px 32px 16px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-color);
       color: var(--text-color);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      min-height: 90vh;
-      box-sizing: border-box;
+      min-height: 100vh;
       text-align: center;
     }
-    .icon {
-      font-size: 64px;
-      margin-top: 20px;
-      animation: bounce 2s infinite;
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fbbf24;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 8px;
+      margin-bottom: 12px;
+      animation: pulse 2.5s infinite;
     }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
     }
     h1 {
       font-size: 22px;
-      margin: 12px 0 6px 0;
-      font-weight: 700;
+      margin: 4px 0 8px 0;
+      font-weight: 800;
+      letter-spacing: -0.02em;
     }
     .subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--hint-color);
-      line-height: 1.5;
-      margin-bottom: 24px;
+      line-height: 1.45;
+      margin-bottom: 18px;
       max-width: 320px;
     }
-    .reward-badge {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #fff;
-      font-weight: 700;
-      font-size: 15px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
-      margin-bottom: 24px;
-      display: inline-flex;
+    .device-banner {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #93c5fd;
+      margin-bottom: 16px;
+      display: flex;
       align-items: center;
       gap: 8px;
+      width: 100%;
+      max-width: 360px;
+      text-align: left;
     }
     .card {
       background-color: var(--card-bg);
       border-radius: 16px;
       padding: 16px;
       width: 100%;
-      max-width: 340px;
+      max-width: 360px;
       text-align: left;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: var(--text-color);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      margin-bottom: 14px;
+      border: 1px solid var(--card-border);
     }
     .card-title {
-      font-weight: 600;
-      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       gap: 6px;
+      color: var(--text-color);
+    }
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+      color: #cbd5e1;
+    }
+    .step-item:last-child {
+      margin-bottom: 0;
+    }
+    .step-num {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-weight: 700;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 1px;
     }
     .btn {
       width: 100%;
-      max-width: 340px;
+      max-width: 360px;
       background: var(--button-color);
       color: var(--button-text);
-      font-size: 16px;
-      font-weight: 600;
-      padding: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 15px 18px;
       border: none;
       border-radius: 14px;
       cursor: pointer;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-      transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      margin-bottom: 10px;
     }
     .btn:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
       opacity: 0.9;
     }
-    .status {
-      font-size: 13px;
-      color: var(--hint-color);
-      margin-top: 12px;
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #f1f5f9;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: none;
     }
-    #fileInput {
+    .btn-secondary:active {
+      background: rgba(255, 255, 255, 0.14);
+    }
+    .status-box {
+      font-size: 12px;
+      color: var(--hint-color);
+      margin-top: 8px;
+      min-height: 20px;
+    }
+    .file-input {
       display: none;
+    }
+    .privacy-tag {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 14px;
+      line-height: 1.4;
+      max-width: 320px;
     }
   </style>
 </head>
 <body>
-  <div>
-    <div class="icon">📱</div>
-    <h1>Синхронизация контактов</h1>
-    <div class="subtitle">Поделитесь записной книжкой для взаимного обогащения открытых телефонных ассоциаций</div>
-    
-    <div class="reward-badge">
-      <span>🎁</span>
-      <span>Бонус: +50 проверок на баланс</span>
-    </div>
 
-    <div class="card">
-      <div class="card-title">🔒 Полная конфиденциальность</div>
-      <div>• Все имена агрегируются обезличенно.<br>• Никто не узнает, кто именно внес контакт.<br>• Проверки начисляются моментально.</div>
+  <!-- Награда -->
+  <div class="header-badge">
+    <span>🎁</span>
+    <span>БОНУС: +50 ПРОВЕРОК НА БАЛАНС</span>
+  </div>
+
+  <h1>Синхронизация контактов</h1>
+  <div class="subtitle">Передайте телефонную книгу для взаимного обогащения Big Data связей и получите +50 бесплатных запросов</div>
+
+  <!-- Определение платформы -->
+  <div id="deviceBanner" class="device-banner">
+    <span style="font-size: 16px;">📱</span>
+    <span id="deviceText">Определяю тип устройства...</span>
+  </div>
+
+  <!-- Пошаговая адаптивная инструкция под модель смартфона -->
+  <div class="card" id="instructionCard">
+    <div class="card-title">
+      <span id="instructionIcon">📋</span>
+      <span id="instructionTitle">Как синхронизировать в 2 клика:</span>
+    </div>
+    <div id="instructionSteps">
+      <!-- Наполняется динамически скриптом -->
     </div>
   </div>
 
+  <!-- Интерактивные кнопки действий -->
   <div style="width: 100%; display: flex; flex-direction: column; align-items: center;">
-    <button id="syncBtn" class="btn">
-      <span>⚡</span>
-      <span>Синхронизировать в 1 клик</span>
+    
+    <!-- 1. Нативная кнопка выбора файла (открывает Недавние / Мои Файлы / Загрузки) -->
+    <button id="uploadVcfBtn" class="btn">
+      <span>📂</span>
+      <span>Выбрать файл контактов (.vcf)</span>
     </button>
-    <input type="file" id="fileInput" accept=".vcf,.vcard">
-    <div id="statusText" class="status">Нажмите для выбора контактов</div>
+    <input type="file" id="vcfFileInput" class="file-input" accept=".vcf,.vcard,text/vcard,text/x-vcard">
+
+    <!-- 2. Альтернативная кнопка прямого доступа W3C (если поддерживается браузером) -->
+    <button id="directPickerBtn" class="btn btn-secondary">
+      <span>👥</span>
+      <span id="directPickerLabel">Выбрать контакты из книги</span>
+    </button>
+
+    <div id="statusText" class="status-box">Нажмите кнопку выше для синхронизации</div>
+  </div>
+
+  <div class="privacy-tag">
+    🔒 Все данные агрегируются обезличенно в соответствии со стандартами конфиденциальности. Никто не увидит, чей это контакт.
   </div>
 
   <script>
@@ -146,27 +233,114 @@
       tg.expand();
     }
 
-    const syncBtn = document.getElementById('syncBtn');
+    const deviceText = document.getElementById('deviceText');
+    const instructionIcon = document.getElementById('instructionIcon');
+    const instructionTitle = document.getElementById('instructionTitle');
+    const instructionSteps = document.getElementById('instructionSteps');
+    const uploadVcfBtn = document.getElementById('uploadVcfBtn');
+    const directPickerBtn = document.getElementById('directPickerBtn');
+    const directPickerLabel = document.getElementById('directPickerLabel');
+    const vcfFileInput = document.getElementById('vcfFileInput');
     const statusText = document.getElementById('statusText');
-    const fileInput = document.getElementById('fileInput');
 
-    syncBtn.addEventListener('click', async () => {
-      // 1. Проверяем поддержку W3C Web Contacts API (Android Chrome / Webview)
+    // Детекция типа устройства и ОС
+    const ua = navigator.userAgent || "";
+    const isSamsung = /Samsung|SM-|SGH-|SCH-|SPH-/i.test(ua);
+    const isXiaomi = /Xiaomi|Redmi|POCO|MI /i.test(ua);
+    const isHuawei = /Huawei|HONOR/i.test(ua);
+    const isAndroid = /Android/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+    // Адаптивная настройка инструкций по стандартам Mobile UX
+    if (isSamsung) {
+      deviceText.innerText = "Обнаружен Samsung Galaxy (One UI)";
+      instructionIcon.innerText = "✨";
+      instructionTitle.innerText = "Инструкция для Samsung Galaxy:";
+      instructionSteps.innerHTML = `
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div>Откройте системное приложение <b>«Контакты»</b> на вашем Samsung.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div>Смахните шторку меню слева ➔ <b>«Управление контактами»</b> ➔ <b>«Экспорт контактов»</b> (во внутреннюю память).</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div>Нажмите кнопку <b>«Выбрать файл (.vcf)»</b> ниже — файл лежит первым во вкладке «Недавние» в «Моих файлах»!</div>
+        </div>
+      `;
+    } else if (isIOS) {
+      deviceText.innerText = "Обнаружен Apple iPhone (iOS)";
+      instructionIcon.innerText = "🍏";
+      instructionTitle.innerText = "Инструкция для iPhone (iOS):";
+      instructionSteps.innerHTML = `
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div>Откройте приложение <b>«Контакты»</b> на iPhone.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div>Нажмите вверху слева <b>«Списки»</b> ➔ зажмите <b>«Все контакты»</b> ➔ нажмите <b>«Экспорт»</b>.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div>Сохраните в «Файлы» или отправьте напрямую боту!</div>
+        </div>
+      `;
+    } else if (isXiaomi || isHuawei) {
+      deviceText.innerText = isXiaomi ? "Обнаружен Xiaomi / Redmi / POCO" : "Обнаружен Huawei / Honor";
+      instructionIcon.innerText = "🤖";
+      instructionTitle.innerText = "Инструкция для Android:";
+      instructionSteps.innerHTML = `
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div>Откройте приложение <b>«Контакты»</b> ➔ «Настройки».</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div>Выберите <b>«Импорт и экспорт»</b> ➔ <b>«Экспорт в накопитель (.vcf)»</b>.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div>Нажмите кнопку <b>«Выбрать файл (.vcf)»</b> ниже и укажите сохраненный файл!</div>
+        </div>
+      `;
+    } else {
+      deviceText.innerText = "Смартфон / Планшет";
+      instructionIcon.innerText = "📱";
+      instructionTitle.innerText = "Быстрый экспорт телефонной книги:";
+      instructionSteps.innerHTML = `
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div>Откройте приложение <b>«Контакты»</b> на вашем телефоне.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div>В настройках контактов нажмите <b>«Экспорт в файл .vcf»</b>.</div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div>Нажмите кнопку <b>«Выбрать файл (.vcf)»</b> ниже и прикрепите файл.</div>
+        </div>
+      `;
+    }
+
+    // 1. Действие: Выбор файла .vcf
+    uploadVcfBtn.addEventListener('click', () => {
+      vcfFileInput.click();
+    });
+
+    // 2. Действие: Попытка прямого вызова системного Contacts API (W3C)
+    directPickerBtn.addEventListener('click', async () => {
       if ('contacts' in navigator && 'ContactsManager' in window) {
         try {
-          statusText.innerText = "Открываю системное окно контактов...";
-          const props = ['name', 'tel'];
-          const opts = { multiple: true };
-          const contacts = await navigator.contacts.select(props, opts);
-          
+          statusText.innerText = "Открываю адресную книгу...";
+          const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
           if (!contacts || contacts.length === 0) {
-            statusText.innerText = "Контакты не были выбраны";
+            statusText.innerText = "Контакты не были выбраны.";
             return;
           }
-
-          statusText.innerText = `Выбрано: ${contacts.length}. Отправляю в AgentOS...`;
-
-          // Преобразуем в плоский формат
           const formatted = [];
           for (const c of contacts) {
             const name = (c.name && c.name.length) ? c.name[0] : "Контакт";
@@ -175,36 +349,31 @@
               formatted.push({ name: name, tel: t });
             }
           }
-
-          if (tg) {
-            tg.sendData(JSON.stringify({ contacts: formatted }));
-            tg.close();
-          } else {
-            alert(`Успешно выбрано ${formatted.length} номеров!`);
-          }
+          submitContactsToBot(formatted);
         } catch (err) {
-          console.warn("Contacts API cancelled or error:", err);
-          statusText.innerText = "Используйте экспорт файла .vcf ниже";
-          fileInput.click();
+          console.warn("W3C Contacts API rejected by webview:", err);
+          statusText.innerText = "Система заблокировала прямой доступ. Используйте кнопку выбора .vcf";
+          vcfFileInput.click();
         }
       } else {
-        // 2. Fallback для iOS / браузеров без прямого доступа: быстрый выбор .vcf файла
-        statusText.innerText = "Выберите экспортированный файл контактов (.vcf)";
-        fileInput.click();
+        // Fallback: открытие выбора файла
+        statusText.innerText = "Используйте экспорт файла .vcf выше";
+        vcfFileInput.click();
       }
     });
 
-    fileInput.addEventListener('change', async (e) => {
+    // Обработка выбранного .vcf файла
+    vcfFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      statusText.innerText = `Читаю ${file.name}...`;
+      statusText.innerText = `Обрабатываю файл ${file.name}...`;
       const reader = new FileReader();
       reader.onload = function(evt) {
         const text = evt.target.result;
-        // Простой парсинг vcf в браузере
         const blocks = text.split(/BEGIN:VCARD/i);
         const contacts = [];
+
         for (const b of blocks) {
           if (!b.trim()) continue;
           let name = "Контакт";
@@ -220,16 +389,33 @@
           }
         }
 
-        if (contacts.length > 0 && tg) {
-          statusText.innerText = `Отправляю ${contacts.length} контактов боту...`;
-          tg.sendData(JSON.stringify({ contacts: contacts }));
-          tg.close();
+        if (contacts.length > 0) {
+          submitContactsToBot(contacts);
         } else {
-          statusText.innerText = `Найдено контактов: ${contacts.length}.`;
+          statusText.innerText = "⚠️ В файле не найдено телефонных номеров. Убедитесь, что это корректный .vcf файл.";
         }
+      };
+      reader.onerror = function() {
+        statusText.innerText = "⚠️ Не удалось прочитать файл.";
       };
       reader.readAsText(file);
     });
+
+    // Отправка распарсенных контактов в бота через Telegram WebApp
+    function submitContactsToBot(contactsList) {
+      statusText.innerText = `Найдено контактов: ${contactsList.length}. Передаю боту...`;
+      if (tg) {
+        try {
+          tg.sendData(JSON.stringify({ contacts: contactsList }));
+          tg.close();
+        } catch (err) {
+          console.error("tg.sendData error:", err);
+          statusText.innerText = `Ошибка отправки в Telegram: ${err.message}`;
+        }
+      } else {
+        alert(`Успешно обработано ${contactsList.length} контактов! Откройте Mini App внутри Telegram.`);
+      }
+    }
   </script>
 </body>
 </html>
